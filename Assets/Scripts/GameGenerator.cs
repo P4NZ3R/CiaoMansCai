@@ -13,19 +13,10 @@ public class GameGenerator : MonoBehaviour
 
     [Header("Planets")]
     public float planetMinMass;
-    public Planet[] map;
 
     float planetTotalMass;
     float planetMaxMass;
     Dictionary<int, Vector3[]> debugMovements;
-
-    [System.Serializable]
-    public struct Planet
-    {
-        public Vector3 pos;
-        public float mass;
-        public GameObject go;
-    }
 
     // Use this for initialization
     void Start()
@@ -60,13 +51,13 @@ public class GameGenerator : MonoBehaviour
 
     void GenerateMap()
     {
-        if (map != null)
+        if (Universe.map != null)
         {
-            for (int i = 0; i < map.Length; i++)
+            for (int i = 0; i < Universe.map.Length; i++)
             {
-                if (map[i].go != null)
-                    Destroy(map[i].go);
-                map[i].go = null;
+                if (Universe.map[i].go != null)
+                    Destroy(Universe.map[i].go);
+                Universe.map[i].go = null;
             }
         }
 
@@ -79,51 +70,51 @@ public class GameGenerator : MonoBehaviour
         planetTotalMass = Rng.GetNumber(10f, 25f);
         planetMaxMass = planetTotalMass / 2f;
         float totalMass = planetTotalMass;
-        map = new Planet[20];
+        Universe.map = new Universe.Planet[20];
 
         //genera numeri casuali per posizione e massa
-        for (int i = 0; i < map.Length && totalMass > planetMinMass; i++)
+        for (int i = 0; i < Universe.map.Length && totalMass > planetMinMass; i++)
         {
-            map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-9f, 9f), 0);
-            map[i].mass = Rng.GetNumber(planetMinMass, planetMaxMass);
-            if (map[i].mass > totalMass || i == map.Length - 1)
-                map[i].mass = totalMass;
-            totalMass -= map[i].mass;
+            Universe.map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-9f, 9f), 0);
+            Universe.map[i].mass = Rng.GetNumber(planetMinMass, planetMaxMass);
+            if (Universe.map[i].mass > totalMass || i == Universe.map.Length - 1)
+                Universe.map[i].mass = totalMass;
+            totalMass -= Universe.map[i].mass;
         }
         //ordina i pianeti per massa decrescente
-        map = PlanetSort(map);
+        Universe.map = Universe.PlanetSort(Universe.map);
 
         //fix planet position
         int movements = 0;
-        for (int i = 0; positionFix && i < map.Length; i++)
+        for (int i = 0; positionFix && i < Universe.map.Length; i++)
         {
-            if (!PlanetExists(map, i))
+            if (!Universe.PlanetExists(Universe.map, i))
                 continue;
             
             for (int j = 0; j < i && movements < maxMovements; j++)
             {
-                if (!PlanetExists(map, j))
+                if (!Universe.PlanetExists(Universe.map, j))
                     continue;
       
-                Vector3 dir = (map[i].pos - map[j].pos).normalized;
-                float d = Vector3.Distance(map[i].pos - dir * (map[i].mass / 2f), map[j].pos + dir * (map[j].mass / 2f));
-                float neededDistance = (map[i].mass + map[j].mass) / 2f;
+                Vector3 dir = (Universe.map[i].pos - Universe.map[j].pos).normalized;
+                float d = Vector3.Distance(Universe.map[i].pos - dir * (Universe.map[i].mass / 2f), Universe.map[j].pos + dir * (Universe.map[j].mass / 2f));
+                float neededDistance = (Universe.map[i].mass + Universe.map[j].mass) / 2f;
                 if (d < neededDistance)
                 {
                     Debug.Log("Planet" + i + " con " + "Planet" + j + " = " + "current:" + d + " needed:" + neededDistance);
-                    Vector3 newPos = map[j].pos + dir * (map[j].mass / 2f + map[i].mass / 2f + neededDistance * (1.3f + movements / 10f));
+                    Vector3 newPos = Universe.map[j].pos + dir * (Universe.map[j].mass / 2f + Universe.map[i].mass / 2f + neededDistance * (1.3f + movements / 10f));
                     if (debugMovements.ContainsKey(movements))
                         Debug.LogError(movements);
-                    debugMovements.Add(movements + i * maxMovements, new []{ map[i].pos, newPos });
-                    map[i].pos = newPos;
+                    debugMovements.Add(movements + i * maxMovements, new []{ Universe.map[i].pos, newPos });
+                    Universe.map[i].pos = newPos;
                     j = -1;
                     movements++;
                 }
             }
             if (movements >= maxMovements)
             {
-                map[i].mass = -1;
-                map[i].pos = Vector3.zero;
+                Universe.map[i].mass = -1;
+                Universe.map[i].pos = Vector3.zero;
                 Debug.LogError("Planet" + i + " destroyed!");
             }
             movements = 0;
@@ -132,19 +123,19 @@ public class GameGenerator : MonoBehaviour
         //move planets to center
         Vector3 average = Vector3.zero; 
         int k = 0;
-        for (int i = 0; i < map.Length; i++)
+        for (int i = 0; i < Universe.map.Length; i++)
         {
-            if (!PlanetExists(map, i))
+            if (!Universe.PlanetExists(Universe.map, i))
                 continue;
             k++;
-            average += map[i].pos;
+            average += Universe.map[i].pos;
         }
         average /= k;
-        for (int i = 0; i < map.Length; i++)
+        for (int i = 0; i < Universe.map.Length; i++)
         {
-            if (!PlanetExists(map, i))
+            if (!Universe.PlanetExists(Universe.map, i))
                 continue;
-            map[i].pos -= average;
+            Universe.map[i].pos -= average;
         }
         #if UNITY_EDITOR
         foreach (KeyValuePair<int, Vector3[]> kv in debugMovements)
@@ -155,37 +146,15 @@ public class GameGenerator : MonoBehaviour
         #endif
 
         //instantiate planets
-        for (int i = 0; i < map.Length; i++)
+        for (int i = 0; i < Universe.map.Length; i++)
         {
-            if (!PlanetExists(map, i))
+            if (!Universe.PlanetExists(Universe.map, i))
                 continue;
-            map[i].go = Instantiate(planet, map[i].pos, Quaternion.identity) as GameObject;
-            map[i].go.transform.localScale = new Vector3(map[i].mass, map[i].mass, 1);
-            map[i].go.name = "Planet" + i;
+            Universe.map[i].go = Instantiate(planet, Universe.map[i].pos, Quaternion.identity) as GameObject;
+            Universe.map[i].go.transform.localScale = new Vector3(Universe.map[i].mass, Universe.map[i].mass, 1);
+            Universe.map[i].go.name = "Planet" + i;
         }
     }
 
-    bool PlanetExists(Planet[] m, int i)
-    {
-        return !(m[i].mass <= 0 || m[i].pos == Vector3.zero);
-    }
 
-    Planet[] PlanetSort(Planet[] p)
-    {
-        for (int i = 0; i < p.Length; i++)
-        {
-            int max = i;
-            for (int j = i + 1; j < p.Length; j++)
-            {
-                if (map[j].mass > map[max].mass)
-                {
-                    max = j;
-                }
-            }
-            Planet tmp = map[max];
-            map[max] = map[i];
-            map[i] = tmp;
-        }
-        return p;
-    }
 }
