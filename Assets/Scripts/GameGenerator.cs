@@ -10,12 +10,14 @@ public class GameGenerator : MonoBehaviour
     [Header("Generation")]
     public string seed = "CiaoMansCai";
     public bool positionFix;
-    public int maxMovements = 100;
+    public int maxMovements = 50;
 
     [Header("Players")]
     public int activeTeam = 0;
     public int activePlayer = 0;
     public Team[] team;
+
+    Camera mainCamera;
 
     const float planetMinMass = 2f;
     float planetTotalMass;
@@ -24,6 +26,7 @@ public class GameGenerator : MonoBehaviour
 
     public struct Team
     {
+        public Color color;
         public GameObject[] players;
         public GameObject[] planets;
     }
@@ -31,8 +34,10 @@ public class GameGenerator : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         debugMovements = new Dictionary<int, Vector3[]>();
         GenerateMap();   
+        EndTurn();
     }
 	
     // Update is called once per frame
@@ -49,13 +54,29 @@ public class GameGenerator : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            PlayerTurnManager();
+            EndTurn();
         }
-
+        if (Input.GetKeyDown(KeyCode.PageUp))
+        {
+            if (mainCamera.orthographicSize > 9)
+                mainCamera.orthographicSize -= 3;
+            
+        }
+        if (Input.GetKeyDown(KeyCode.PageDown))
+        {
+            if (mainCamera.orthographicSize < 39)
+                mainCamera.orthographicSize += 3;
+        }
         #if UNITY_EDITOR
         foreach (KeyValuePair<int, Vector3[]> kv in debugMovements)
             Debug.DrawLine(kv.Value[0], kv.Value[1], Color.white);
         #endif
+        //posiziona la telecamera in base al player
+        if (Vector2.Distance(mainCamera.transform.position, team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f) > 0.1f)
+            mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f, Time.deltaTime);
+        else
+            mainCamera.transform.position = team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f;
+        mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[activePlayer].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f);
     }
 
     string RandomSeed()
@@ -63,7 +84,7 @@ public class GameGenerator : MonoBehaviour
         return System.DateTime.Now.Ticks.ToString();
     }
 
-    void PlayerTurnManager()
+    void EndTurn()
     {
         if (activeTeam >= team.Length - 1)
         {
@@ -123,9 +144,10 @@ public class GameGenerator : MonoBehaviour
         //genera un numero di giocatori per team casuale
         team = new Team[2];
         int numPlayer = Rng.GetNumber(1, 3 + 1);
-        GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>().orthographicSize = 15 + (numPlayer - 1) * 4;
+        mainCamera.orthographicSize = 15 + (numPlayer - 1) * 4;
         for (int i = 0; i < team.Length; i++)
         {
+            team[i].color = GameColors.GetRandomColor();
             team[i].players = new GameObject[numPlayer];
             team[i].planets = new GameObject[numPlayer];
         }
@@ -137,7 +159,7 @@ public class GameGenerator : MonoBehaviour
         Universe.map = new Universe.Planet[20];
         for (int i = 0; i < Universe.map.Length && totalMass > planetMinMass; i++)
         {
-            Universe.map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-5f, 5f), 0);
+            Universe.map[i].pos = new Vector3(Rng.GetNumber(-14 - 2f * numPlayer, 14f + 2f * numPlayer), Rng.GetNumber(-4.5f - 0.5f * numPlayer, 4.5f + 0.5f * numPlayer), 0);
             Universe.map[i].mass = Rng.GetNumber(planetMinMass, planetMaxMass);
             if (Universe.map[i].mass > totalMass || i == Universe.map.Length - 1)
                 Universe.map[i].mass = totalMass;
@@ -238,9 +260,11 @@ public class GameGenerator : MonoBehaviour
                 Vector3 normalDir = new Vector3(Rng.GetNumber(0f, 1f) - 0.5f, Rng.GetNumber(0f, 1f) - 0.5f).normalized;
                 Vector3 posPlayer = Universe.map[rng].pos + (Universe.map[rng].mass + 1f) / 2f * normalDir;
                 team[i].players[j] = Instantiate(player, posPlayer, Quaternion.identity) as GameObject;
+                team[i].players[j].GetComponent<Player>().gameGenerator = GetComponent<GameGenerator>();
                 team[i].players[j].GetComponent<Player>().planet = Universe.map[rng].go;
                 team[i].players[j].GetComponent<Player>().teamId = i;
                 team[i].players[j].GetComponent<Player>().playerId = j;
+                team[i].players[j].GetComponent<SpriteRenderer>().color = team[i].color;
                 Universe.map[rng].teamOwner = i;
                 Universe.map[rng].playerOwner = j;
 
