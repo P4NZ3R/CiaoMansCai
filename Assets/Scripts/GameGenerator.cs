@@ -40,7 +40,7 @@ public class GameGenerator : MonoBehaviour
 
         #if UNITY_EDITOR
         foreach (KeyValuePair<int, Vector3[]> kv in debugMovements)
-            Debug.DrawLine(kv.Value[0], kv.Value[1], Color.red);
+            Debug.DrawLine(kv.Value[0], kv.Value[1], Color.white);
         #endif
     }
 
@@ -75,7 +75,7 @@ public class GameGenerator : MonoBehaviour
         //genera numeri casuali per posizione e massa
         for (int i = 0; i < Universe.map.Length && totalMass > planetMinMass; i++)
         {
-            Universe.map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-9f, 9f), 0);
+            Universe.map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-5f, 5f), 0);
             Universe.map[i].mass = Rng.GetNumber(planetMinMass, planetMaxMass);
             if (Universe.map[i].mass > totalMass || i == Universe.map.Length - 1)
                 Universe.map[i].mass = totalMass;
@@ -102,7 +102,7 @@ public class GameGenerator : MonoBehaviour
                 if (d < neededDistance)
                 {
                     Debug.Log("Planet" + i + " con " + "Planet" + j + " = " + "current:" + d + " needed:" + neededDistance);
-                    Vector3 newPos = Universe.map[j].pos + dir * (Universe.map[j].mass / 2f + Universe.map[i].mass / 2f + neededDistance * (1.3f + movements / 10f));
+                    Vector3 newPos = Universe.map[j].pos + dir * (Universe.map[j].mass / 2f + Universe.map[i].mass / 2f + neededDistance * (1.2f + movements / 25f));
                     if (debugMovements.ContainsKey(movements))
                         Debug.LogError(movements);
                     debugMovements.Add(movements + i * maxMovements, new []{ Universe.map[i].pos, newPos });
@@ -153,8 +153,7 @@ public class GameGenerator : MonoBehaviour
             Universe.map[i].go = Instantiate(planet, Universe.map[i].pos, Quaternion.identity) as GameObject;
             Universe.map[i].go.transform.localScale = new Vector3(Universe.map[i].mass, Universe.map[i].mass, 1);
             Universe.map[i].go.name = "Planet" + i;
+            Universe.map[i].go.GetComponent<SpriteRenderer>().color = Universe.map[i].color = GameColors.GetRandomColor();
         }
     }
-
-
 }

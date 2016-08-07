@@ -10,6 +10,7 @@ public static class Universe
         public Vector3 pos;
         public float mass;
         public GameObject go;
+        public Color color;
     }
 
     public static Planet[] PlanetSort(Planet[] p)
