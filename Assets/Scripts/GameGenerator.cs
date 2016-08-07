@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 // il nostro seed speciale <3 = 636061745828876374
 // 636061842353274677
+using UnityEngine.Networking.Match;
 
 public class GameGenerator : MonoBehaviour
 {
@@ -11,12 +12,21 @@ public class GameGenerator : MonoBehaviour
     public bool positionFix;
     public int maxMovements = 100;
 
-    [Header("Planets")]
-    public float planetMinMass;
+    [Header("Players")]
+    public int activeTeam = 0;
+    public int activePlayer = 0;
+    public Team[] team;
 
+    const float planetMinMass = 2f;
     float planetTotalMass;
     float planetMaxMass;
     Dictionary<int, Vector3[]> debugMovements;
+
+    public struct Team
+    {
+        public GameObject[] players;
+        public GameObject[] planets;
+    }
 
     // Use this for initialization
     void Start()
@@ -37,6 +47,10 @@ public class GameGenerator : MonoBehaviour
         {
             GenerateMap();
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            PlayerTurnManager();
+        }
 
         #if UNITY_EDITOR
         foreach (KeyValuePair<int, Vector3[]> kv in debugMovements)
@@ -49,8 +63,29 @@ public class GameGenerator : MonoBehaviour
         return System.DateTime.Now.Ticks.ToString();
     }
 
+    void PlayerTurnManager()
+    {
+        if (activeTeam >= team.Length - 1)
+        {
+            activeTeam = 0;
+            if (activePlayer >= team[activeTeam].players.Length - 1)
+            {
+                activePlayer = 0;
+            }
+            else
+            {
+                activePlayer++;
+            }
+        }
+        else
+        {
+            activeTeam++;
+        }
+    }
+
     void GenerateMap()
     {
+        //distrugge i precedenti pianeti se presenti
         if (Universe.map != null)
         {
             for (int i = 0; i < Universe.map.Length; i++)
@@ -60,19 +95,46 @@ public class GameGenerator : MonoBehaviour
                 Universe.map[i].go = null;
             }
         }
-
+        //distrugge i precedenti player se presenti
+        if (team != null)
+        {
+            for (int i = 0; i < team.Length; i++)
+            {
+                for (int j = 0; j < team[i].players.Length; j++)
+                {
+                    if (team[i].players[j] != null)
+                    {
+                        Destroy(team[i].players[j]);
+                        team[i].players[j] = null;
+                    }
+                }
+            }
+        }
+        //se il seed non e presente lo genera casualmente
         if (string.IsNullOrEmpty(seed))
             seed = RandomSeed();
         Rng.SetSeed(seed);
-        GameObject planet = Resources.Load("Planet") as GameObject;
 
+        //carica i prefab
+        GameObject planet = Resources.Load("Planet") as GameObject;
+        GameObject player = Resources.Load("Player") as GameObject;
         debugMovements.Clear();
-        planetTotalMass = Rng.GetNumber(10f, 25f);
-        planetMaxMass = planetTotalMass / 2f;
-        float totalMass = planetTotalMass;
-        Universe.map = new Universe.Planet[20];
+
+        //genera un numero di giocatori per team casuale
+        team = new Team[2];
+        int numPlayer = Rng.GetNumber(1, 3 + 1);
+        GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>().orthographicSize = 15 + (numPlayer - 1) * 4;
+        for (int i = 0; i < team.Length; i++)
+        {
+            team[i].players = new GameObject[numPlayer];
+            team[i].planets = new GameObject[numPlayer];
+        }
 
         //genera numeri casuali per posizione e massa
+        planetTotalMass = Rng.GetNumber(10f * numPlayer, 25f * numPlayer);
+        planetMaxMass = planetTotalMass / (numPlayer * 2.5f);
+        float totalMass = planetTotalMass;
+        Universe.map = new Universe.Planet[20];
         for (int i = 0; i < Universe.map.Length && totalMass > planetMinMass; i++)
         {
             Universe.map[i].pos = new Vector3(Rng.GetNumber(-16, 16f), Rng.GetNumber(-5f, 5f), 0);
@@ -101,8 +163,8 @@ public class GameGenerator : MonoBehaviour
                 float neededDistance = (Universe.map[i].mass + Universe.map[j].mass) / 2f;
                 if (d < neededDistance)
                 {
-                    Debug.Log("Planet" + i + " con " + "Planet" + j + " = " + "current:" + d + " needed:" + neededDistance);
-                    Vector3 newPos = Universe.map[j].pos + dir * (Universe.map[j].mass / 2f + Universe.map[i].mass / 2f + neededDistance * (1.2f + movements / 25f));
+//                    Debug.Log("Planet" + i + " con " + "Planet" + j + " = " + "current:" + d + " needed:" + neededDistance);
+                    Vector3 newPos = Universe.map[j].pos + dir * (Universe.map[j].mass / 2f + Universe.map[i].mass / 2f + neededDistance * (1.2f + movements / (25f * numPlayer)));
                     if (debugMovements.ContainsKey(movements))
                         Debug.LogError(movements);
                     debugMovements.Add(movements + i * maxMovements, new []{ Universe.map[i].pos, newPos });
@@ -146,6 +208,7 @@ public class GameGenerator : MonoBehaviour
         #endif
 
         //instantiate planets
+        int numPlanets = 0;
         for (int i = 0; i < Universe.map.Length; i++)
         {
             if (!Universe.PlanetExists(Universe.map, i))
@@ -154,6 +217,38 @@ public class GameGenerator : MonoBehaviour
             Universe.map[i].go.transform.localScale = new Vector3(Universe.map[i].mass, Universe.map[i].mass, 1);
             Universe.map[i].go.name = "Planet" + i;
             Universe.map[i].go.GetComponent<SpriteRenderer>().color = Universe.map[i].color = GameColors.GetRandomColor();
+            Universe.map[i].teamOwner = -1;
+            Universe.map[i].playerOwner = -1;
+            numPlanets++;
+        }
+
+        //instantiate player
+        Universe.PlanetSort(Universe.map);
+        for (int i = 0; i < team.Length; i++)
+        {
+            for (int j = 0; j < team[i].players.Length; j++)
+            {
+                int rng = Rng.GetNumber(0, numPlanets);//planet selected
+                team[i].planets[j] = Universe.map[rng].go;
+                if (Universe.map[rng].go == null)
+                {
+                    Debug.LogError("Player try to spawn on an anexisting planet!\nid:" + rng);
+                    return;
+                }
+                Vector3 normalDir = new Vector3(Rng.GetNumber(0f, 1f) - 0.5f, Rng.GetNumber(0f, 1f) - 0.5f).normalized;
+                Vector3 posPlayer = Universe.map[rng].pos + (Universe.map[rng].mass + 1f) / 2f * normalDir;
+                team[i].players[j] = Instantiate(player, posPlayer, Quaternion.identity) as GameObject;
+                team[i].players[j].GetComponent<Player>().planet = Universe.map[rng].go;
+                team[i].players[j].GetComponent<Player>().teamId = i;
+                team[i].players[j].GetComponent<Player>().playerId = j;
+                Universe.map[rng].teamOwner = i;
+                Universe.map[rng].playerOwner = j;
+
+                numPlanets--;
+                Universe.Planet tmp = Universe.map[rng]; 
+                Universe.map[rng] = Universe.map[numPlanets];
+                Universe.map[numPlanets] = tmp;
+            }
         }
     }
 }
