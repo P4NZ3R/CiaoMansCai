@@ -48,6 +48,21 @@ public class GameGenerator : MonoBehaviour
     float planetTotalMass;
     float planetMaxMass;
     Dictionary<int, Vector3[]> debugMovements;
+    int currentProjectiles = 0;
+
+    public static int CurrentProjectiles
+    {
+        get { return instance.currentProjectiles; }
+        set
+        {
+            instance.currentProjectiles = value;
+            if (instance.currentProjectiles <= 0)
+            {
+                instance.team[instance.activeTeam].players[instance.team[instance.activeTeam].ActivePlayer].GetComponent<Player>().canShoot = true;
+                instance.EndTurn();
+            }
+        }
+    }
 
     public struct Team
     {
@@ -109,10 +124,10 @@ public class GameGenerator : MonoBehaviour
         {
             GenerateMap();
         }
-        if (Input.GetKeyUp(KeyCode.Space))
-        {
-            EndTurn();
-        }
+//        if (Input.GetKeyUp(KeyCode.Space))
+//        {
+//            EndTurn();
+//        }
         if (Input.GetKeyDown(KeyCode.PageUp))
         {
             if (mainCamera.orthographicSize > 9)

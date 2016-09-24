@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     float anglePos = 0;
     float speedMovement = 3f;
     float basicBulletForce = 1000f;
+    [HideInInspector]public bool canShoot = true;
     // Use this for initialization
     void Start()
     {
@@ -41,8 +42,9 @@ public class Player : MonoBehaviour
                 RefreshPosition(anglePos - Time.deltaTime * speedMovement / planet.transform.localScale.x);
             }
         }
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && canShoot)
         {
+            canShoot = false;
             GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
             clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
         }

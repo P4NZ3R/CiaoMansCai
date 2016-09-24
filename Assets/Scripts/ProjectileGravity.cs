@@ -6,11 +6,14 @@ using System.Net.Mail;
 public class ProjectileGravity : MonoBehaviour
 {
     Rigidbody2D rigidbody;
-    float gravityMultiplier = 10f;
+    Collider2D collider;
+    const float gravityMultiplier = 10f;
 
     void Start()
     {
+        GameGenerator.CurrentProjectiles++;
         rigidbody = GetComponent<Rigidbody2D>();
+        collider = GetComponent<Collider2D>();
         if (!rigidbody)
         {
             Debug.LogError("no rigidbody attached!");
@@ -44,8 +47,11 @@ public class ProjectileGravity : MonoBehaviour
         if (collision.transform.tag == "Planet")
         {
             Destroy(rigidbody);
+            Destroy(collider);
             rigidbody = null;
-            this.enabled = false;
+            GameGenerator.CurrentProjectiles--;
+
+            enabled = false;
         }
     }
 }
