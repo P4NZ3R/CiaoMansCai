@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class Player : MonoBehaviour
         isActiveSign = transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>();
 //        isActiveSign.gameObject.GetComponent<Animation>().;
         RefreshPosition(Vector2.Angle(transform.position - planet.transform.position, Vector3.right));
+        planet.GetComponent<SpriteRenderer>().color = GameGenerator.GetTeam(teamId).color;
     }
 
     void Update()
@@ -59,7 +61,7 @@ public class Player : MonoBehaviour
         if (anglePos > 360)
             anglePos -= 360;
         Vector3 newNormal = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
-        transform.position = planet.transform.position + planet.transform.localScale.x / 2f * newNormal * 1.2f;
+        transform.position = planet.transform.position + (planet.transform.localScale.x / 2f + transform.localScale.y / 2f) * newNormal;
         anglePos = angle;
     }
 }

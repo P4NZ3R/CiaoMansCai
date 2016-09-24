@@ -4,11 +4,17 @@ using System.Collections.Generic;
 // il nostro seed speciale <3 = 636061745828876374
 // 636061842353274677
 using UnityEngine.Networking.Match;
+using UnityEngineInternal;
 
 public class GameGenerator : MonoBehaviour
 {
+    static GameGenerator instance = null;
+
     [Header("Generation")]
-    public string seed = "CiaoMansCai";
+    [SerializeField]string seed = "CiaoMansCai";
+
+    public static string Seed { get { return instance.seed; } }
+
     public bool positionFix;
     public int maxMovements = 50;
 
@@ -31,6 +37,18 @@ public class GameGenerator : MonoBehaviour
         public GameObject[] planets;
     }
 
+    public static Team GetTeam(int IDteam)
+    {
+        return instance.team[IDteam];
+    }
+
+    void Awake()
+    {
+        if (instance != null)
+            Destroy(instance.gameObject);
+        instance = this;
+    }
+
     // Use this for initialization
     void Start()
     {
@@ -46,6 +64,7 @@ public class GameGenerator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.X))
         {
             seed = "";
+            activeTeam = activePlayer = 0;
             GenerateMap();
         }
         if (Input.GetKeyDown(KeyCode.Z))
@@ -77,6 +96,11 @@ public class GameGenerator : MonoBehaviour
         else
             mainCamera.transform.position = team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f;
         mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[activePlayer].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f);
+    }
+
+    void OnDestroy()
+    {
+        instance = null;
     }
 
     string RandomSeed()
@@ -147,7 +171,16 @@ public class GameGenerator : MonoBehaviour
         mainCamera.orthographicSize = 15 + (numPlayer - 1) * 4;
         for (int i = 0; i < team.Length; i++)
         {
-            team[i].color = GameColors.GetRandomColor();
+            Color teamColor = GameColors.GetRandomColor();
+            for (int j = 0; j < i; j++)
+            {
+                if (teamColor == team[j].color)
+                {
+                    teamColor = GameColors.GetRandomColor();
+                    j = 0;
+                }
+            }
+            team[i].color = teamColor;
             team[i].players = new GameObject[numPlayer];
             team[i].planets = new GameObject[numPlayer];
         }
@@ -238,7 +271,7 @@ public class GameGenerator : MonoBehaviour
             Universe.map[i].go = Instantiate(planet, Universe.map[i].pos, Quaternion.identity) as GameObject;
             Universe.map[i].go.transform.localScale = new Vector3(Universe.map[i].mass, Universe.map[i].mass, 1);
             Universe.map[i].go.name = "Planet" + i;
-            Universe.map[i].go.GetComponent<SpriteRenderer>().color = Universe.map[i].color = GameColors.GetRandomColor();
+            Universe.map[i].go.GetComponent<SpriteRenderer>().color = Universe.map[i].color = GameColors.GetRandomColor(0.4f);
             Universe.map[i].teamOwner = -1;
             Universe.map[i].playerOwner = -1;
             numPlanets++;
