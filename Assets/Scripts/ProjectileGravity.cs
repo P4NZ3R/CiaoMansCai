@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Net.Mail;
 
-[RequireComponent(typeof(Rigidbody2D))]
+//[RequireComponent(typeof(Rigidbody2D))]
 public class ProjectileGravity : MonoBehaviour
 {
     Rigidbody2D rigidbody;
@@ -11,6 +11,12 @@ public class ProjectileGravity : MonoBehaviour
     void Start()
     {
         rigidbody = GetComponent<Rigidbody2D>();
+        if (!rigidbody)
+        {
+            Debug.LogError("no rigidbody attached!");
+            enabled = false;
+            return;
+        }
     }
 
     void FixedUpdate()
@@ -27,5 +33,12 @@ public class ProjectileGravity : MonoBehaviour
             ris += dir * force * gravityMultiplier;
         }
         rigidbody.AddForce(ris);
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        Destroy(rigidbody);
+        rigidbody = null;
+        this.enabled = false;
     }
 }

@@ -12,6 +12,7 @@ public class Player : MonoBehaviour
     public bool isAlive = true;
     float anglePos = 0;
     float speedMovement = 3f;
+    float basicBulletForce = 1000f;
     // Use this for initialization
     void Start()
     {
@@ -40,6 +41,11 @@ public class Player : MonoBehaviour
                 RefreshPosition(anglePos - Time.deltaTime * speedMovement / planet.transform.localScale.x);
             }
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.8f)), Quaternion.identity) as GameObject;
+            clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
+        }
     }
 
     // Update is called once per frame
@@ -49,7 +55,7 @@ public class Player : MonoBehaviour
             return;
         //ruota il player secondo la posizione sul pianeta
         Vector3 vectorToTarget = planet.transform.position - transform.position;
-        float anglePos = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg;
+        float anglePos = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg + 90f;
         Quaternion q = Quaternion.AngleAxis(anglePos, Vector3.forward);
         transform.rotation = q;
     }
