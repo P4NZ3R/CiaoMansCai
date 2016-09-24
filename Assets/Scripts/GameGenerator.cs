@@ -24,7 +24,19 @@ public class GameGenerator : MonoBehaviour
 
     [Header("Players")]
     public int activeTeam = 0;
-    public int activePlayer = 0;
+
+    public int ActiveTeam
+    {
+        get{ return activeTeam; }
+        set
+        {
+            if (value >= team.Length)
+                activeTeam = 0;
+            else
+                activeTeam = value;
+        }
+    }
+
     public Team[] team;
     GameObject basicBullet;
 
@@ -40,6 +52,20 @@ public class GameGenerator : MonoBehaviour
     public struct Team
     {
         public Color color;
+        int activePlayer;
+
+        public int ActivePlayer
+        {
+            get { return activePlayer; }
+            set
+            {
+                if (value < players.Length)
+                    activePlayer = value;
+                else
+                    activePlayer = 0;
+            }
+        }
+
         public GameObject[] players;
         public GameObject[] planets;
     }
@@ -76,7 +102,7 @@ public class GameGenerator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.X))
         {
             seed = "";
-            activeTeam = activePlayer = 0;
+            activeTeam = team[activeTeam].ActivePlayer = 0;
             GenerateMap();
         }
         if (Input.GetKeyDown(KeyCode.Z))
@@ -106,11 +132,14 @@ public class GameGenerator : MonoBehaviour
         }
         #endif
         //posiziona la telecamera in base al player
-        if (Vector2.Distance(mainCamera.transform.position, team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f) > 0.1f)
-            mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f, Time.deltaTime);
-        else
-            mainCamera.transform.position = team[activeTeam].players[activePlayer].transform.position - Vector3.forward * 10f;
-        //mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[activePlayer].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f);
+        if (team[activeTeam].players[team[activeTeam].ActivePlayer])
+        {
+            if (Vector2.Distance(mainCamera.transform.position, team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f) > 0.1f)
+                mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f, Time.deltaTime);
+            else
+                mainCamera.transform.position = team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f;
+            //mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[team[activeTeam].turnCounter].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f); 
+        }
     }
 
     void OnDestroy()
@@ -125,21 +154,17 @@ public class GameGenerator : MonoBehaviour
 
     void EndTurn()
     {
-        if (activeTeam >= team.Length - 1)
+        ActiveTeam++;
+        int tmpPlayer = team[activeTeam].ActivePlayer;
+        do
         {
-            activeTeam = 0;
-            if (activePlayer >= team[activeTeam].players.Length - 1)
-            {
-                activePlayer = 0;
-            }
-            else
-            {
-                activePlayer++;
-            }
+            team[activeTeam].ActivePlayer++;
         }
-        else
+        while(team[activeTeam].players[team[activeTeam].ActivePlayer] == null && tmpPlayer != team[activeTeam].ActivePlayer);
+        if (tmpPlayer == team[activeTeam].ActivePlayer && team[activeTeam].players[tmpPlayer] == null)
         {
-            activeTeam++;
+            Debug.Log("squadra " + activeTeam + " morta");
+            EndTurn();
         }
     }
 
@@ -199,6 +224,7 @@ public class GameGenerator : MonoBehaviour
             team[i].color = teamColor;
             team[i].players = new GameObject[numPlayer];
             team[i].planets = new GameObject[numPlayer];
+            team[i].ActivePlayer = -1;
         }
 
         //genera numeri casuali per posizione e massa

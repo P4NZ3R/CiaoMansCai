@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (!isAlive || gameGenerator.activeTeam != teamId || gameGenerator.activePlayer != playerId)
+        if (!isAlive || gameGenerator.activeTeam != teamId || GameGenerator.GetTeam(teamId).ActivePlayer != playerId)
         {
             isActiveSign.enabled = false;
             return;
@@ -43,7 +43,7 @@ public class Player : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.8f)), Quaternion.identity) as GameObject;
+            GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
             clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
         }
     }
@@ -69,5 +69,11 @@ public class Player : MonoBehaviour
         Vector3 newNormal = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
         transform.position = planet.transform.position + (planet.transform.localScale.x / 2f + transform.localScale.y / 2f) * newNormal;
         anglePos = angle;
+    }
+
+    public void HitPlayer()
+    {
+        GameGenerator.GetTeam(teamId).players[playerId] = null;
+        Destroy(gameObject);
     }
 }

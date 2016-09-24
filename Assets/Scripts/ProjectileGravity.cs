@@ -37,8 +37,15 @@ public class ProjectileGravity : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        Destroy(rigidbody);
-        rigidbody = null;
-        this.enabled = false;
+        if (collision.transform.tag == "Player")
+        {
+            collision.gameObject.GetComponent<Player>().HitPlayer();
+        }
+        if (collision.transform.tag == "Planet")
+        {
+            Destroy(rigidbody);
+            rigidbody = null;
+            this.enabled = false;
+        }
     }
 }
