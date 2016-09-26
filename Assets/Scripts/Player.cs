@@ -13,7 +13,13 @@ public class Player : MonoBehaviour
     float anglePos = 0;
     float speedMovement = 3f;
     float basicBulletForce = 1000f;
+    float shotgunBulletForce = 800f;
+    float grenadeLauncherBulletForce = 1100f;
     [HideInInspector]public bool canShoot = true;
+
+    delegate void ShootSomething();
+
+    ShootSomething shootSomething;
     // Use this for initialization
     void Start()
     {
@@ -21,11 +27,12 @@ public class Player : MonoBehaviour
 //        isActiveSign.gameObject.GetComponent<Animation>().;
         RefreshPosition(Vector2.Angle(transform.position - planet.transform.position, Vector3.right));
         planet.GetComponent<SpriteRenderer>().color = GameGenerator.GetTeam(teamId).color;
+        shootSomething = ShootBasic;
     }
 
     void Update()
     {
-        if (!isAlive || gameGenerator.activeTeam != teamId || GameGenerator.GetTeam(teamId).ActivePlayer != playerId)
+        if (!isAlive || gameGenerator.activeTeam != teamId || GameGenerator.GetTeam(teamId).ActivePlayer != playerId || !canShoot)
         {
             isActiveSign.enabled = false;
             return;
@@ -42,11 +49,21 @@ public class Player : MonoBehaviour
                 RefreshPosition(anglePos - Time.deltaTime * speedMovement / planet.transform.localScale.x);
             }
         }
-        if (Input.GetKeyDown(KeyCode.Space) && canShoot)
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            canShoot = false;
-            GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
-            clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
+            shootSomething = ShootBasic;
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            shootSomething = ShootShotgun;
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            shootSomething = ShootGrenadeLauncher;
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            shootSomething();
         }
     }
 
@@ -77,5 +94,37 @@ public class Player : MonoBehaviour
     {
         GameGenerator.GetTeam(teamId).players[playerId] = null;
         Destroy(gameObject);
+    }
+
+    public void ShootBasic()
+    {
+        canShoot = false;
+        GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
+        GameGenerator.followedObject = clone.transform;
+        clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
+    }
+
+    public void ShootShotgun()
+    {
+        canShoot = false;
+        const float spreadFactor = 0.3f;
+        const int numProjectile = 15;
+        for (int i = 0; i < numProjectile; i++)
+        {
+            GameObject clone = Instantiate(GameGenerator.ShotgunBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
+            GameGenerator.followedObject = clone.transform;
+            Vector2 direction = new Vector2(Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.x, Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.y);
+            clone.GetComponent<Rigidbody2D>().AddForce(direction * shotgunBulletForce);
+        }
+    }
+
+    public void ShootGrenadeLauncher()
+    {
+        canShoot = false;
+        const float spreadFactor = 0.05f;
+        GameObject clone = Instantiate(GameGenerator.GrenadeLauncherBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.2f)), Quaternion.identity) as GameObject;
+        GameGenerator.followedObject = clone.transform;
+        Vector2 direction = new Vector2(Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.x, Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.y);
+        clone.GetComponent<Rigidbody2D>().AddForce(direction * grenadeLauncherBulletForce);
     }
 }

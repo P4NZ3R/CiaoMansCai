@@ -21,6 +21,7 @@ public class GameGenerator : MonoBehaviour
     public bool positionFix;
     public int maxMovements = 50;
     public bool drawPlanetRays = true;
+    [HideInInspector]public static Transform followedObject;
 
     [Header("Players")]
     public int activeTeam = 0;
@@ -39,8 +40,14 @@ public class GameGenerator : MonoBehaviour
 
     public Team[] team;
     GameObject basicBullet;
+    GameObject shotgunBullet;
+    GameObject grenadeLauncherBullet;
 
     public static GameObject BasicBullet { get { return instance.basicBullet; } }
+
+    public static GameObject ShotgunBullet { get { return instance.shotgunBullet; } }
+
+    public static GameObject GrenadeLauncherBullet { get { return instance.grenadeLauncherBullet; } }
 
     Camera mainCamera;
 
@@ -58,7 +65,8 @@ public class GameGenerator : MonoBehaviour
             instance.currentProjectiles = value;
             if (instance.currentProjectiles <= 0)
             {
-                instance.team[instance.activeTeam].players[instance.team[instance.activeTeam].ActivePlayer].GetComponent<Player>().canShoot = true;
+                if (instance.team[instance.activeTeam].players[instance.team[instance.activeTeam].ActivePlayer])
+                    instance.team[instance.activeTeam].players[instance.team[instance.activeTeam].ActivePlayer].GetComponent<Player>().canShoot = true;
                 instance.EndTurn();
             }
         }
@@ -107,6 +115,8 @@ public class GameGenerator : MonoBehaviour
         mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         debugMovements = new Dictionary<int, Vector3[]>();
         basicBullet = Resources.Load("BasicBullet") as GameObject;
+        shotgunBullet = Resources.Load("ShotgunBullet") as GameObject;
+        grenadeLauncherBullet = Resources.Load("GrenadeLauncherBullet") as GameObject;
         GenerateMap();   
         EndTurn();
     }
@@ -147,12 +157,12 @@ public class GameGenerator : MonoBehaviour
         }
         #endif
         //posiziona la telecamera in base al player
-        if (team[activeTeam].players[team[activeTeam].ActivePlayer])
+        if (followedObject)
         {
-            if (Vector2.Distance(mainCamera.transform.position, team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f) > 0.1f)
-                mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f, Time.deltaTime);
+            if (Vector2.Distance(mainCamera.transform.position, followedObject.position - Vector3.forward * 10f) > 0.1f)
+                mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, followedObject.position - Vector3.forward * 10f, Time.deltaTime);
             else
-                mainCamera.transform.position = team[activeTeam].players[team[activeTeam].ActivePlayer].transform.position - Vector3.forward * 10f;
+                mainCamera.transform.position = followedObject.position - Vector3.forward * 10f;
             //mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[team[activeTeam].turnCounter].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f); 
         }
     }
@@ -181,6 +191,7 @@ public class GameGenerator : MonoBehaviour
             Debug.Log("squadra " + activeTeam + " morta");
             EndTurn();
         }
+        followedObject = team[activeTeam].players[team[activeTeam].ActivePlayer].transform;
     }
 
     void GenerateMap()
