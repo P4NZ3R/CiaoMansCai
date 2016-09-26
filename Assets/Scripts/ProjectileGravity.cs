@@ -49,20 +49,18 @@ public class ProjectileGravity : MonoBehaviour
             Destroy(rigidbody);
             Destroy(collider);
             rigidbody = null;
-
             if (GameGenerator.GrenadeLauncherBullet.gameObject.name + "(Clone)" == gameObject.name)
             {
                 Collider2D[] coll = Physics2D.OverlapCircleAll(transform.position, 4f);
                 for (int i = 0; i < coll.Length; i++)
                 {
-                    Debug.Log(coll[i].gameObject.name + "," + Vector2.Distance(coll[i].transform.position, transform.position));
+//                    Debug.Log(coll[i].gameObject.name + "," + Vector2.Distance(coll[i].transform.position, transform.position));
                     if (coll[i].tag == "Player")
                     {
                         coll[i].gameObject.GetComponent<Player>().HitPlayer();
                     }
                 }
             }
-
             GameGenerator.CurrentProjectiles--;
             enabled = false;
         }

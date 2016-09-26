@@ -51,8 +51,8 @@ public class GameGenerator : MonoBehaviour
 
     Camera mainCamera;
 
-    const float planetMinMass = 2f;
     float planetTotalMass;
+    float planetMinMass;
     float planetMaxMass;
     Dictionary<int, Vector3[]> debugMovements;
     int currentProjectiles = 0;
@@ -118,7 +118,6 @@ public class GameGenerator : MonoBehaviour
         shotgunBullet = Resources.Load("ShotgunBullet") as GameObject;
         grenadeLauncherBullet = Resources.Load("GrenadeLauncherBullet") as GameObject;
         GenerateMap();   
-        EndTurn();
     }
 	
     // Update is called once per frame
@@ -254,13 +253,16 @@ public class GameGenerator : MonoBehaviour
         }
 
         //genera numeri casuali per posizione e massa
-        planetTotalMass = Rng.GetNumber(5f * peopleMultiplier, 12.5f * peopleMultiplier);
-        planetMaxMass = planetTotalMass / (peopleMultiplier * 1.25f);
+        planetTotalMass = Rng.GetNumber(4f * peopleMultiplier, 10f * peopleMultiplier);
+        planetMinMass = planetTotalMass * 0.3f / peopleMultiplier;
+        planetMaxMass = planetTotalMass / peopleMultiplier;
         float totalMass = planetTotalMass;
+        float sizeMapMultiplier = planetTotalMass / 4f;
         Universe.map = new Universe.Planet[3 * peopleMultiplier];
         for (int i = 0; i < Universe.map.Length && totalMass > planetMinMass; i++)
         {
-            Universe.map[i].pos = new Vector3(Rng.GetNumber(-14 - peopleMultiplier, 14f + peopleMultiplier), Rng.GetNumber(-4.5f - 0.25f * peopleMultiplier, 4.5f + 0.25f * peopleMultiplier), 0);
+//            Universe.map[i].pos = new Vector3(Rng.GetNumber(-14 - peopleMultiplier, 14f + peopleMultiplier), Rng.GetNumber(-4.5f - 0.25f * peopleMultiplier, 4.5f + 0.25f * peopleMultiplier), 0);
+            Universe.map[i].pos = new Vector3(Rng.GetNumber(-sizeMapMultiplier, sizeMapMultiplier), Rng.GetNumber(-sizeMapMultiplier / 2f, sizeMapMultiplier / 2f), 0);
             Universe.map[i].mass = Rng.GetNumber(planetMinMass, planetMaxMass);
             if (Universe.map[i].mass > totalMass || i == Universe.map.Length - 1)
                 Universe.map[i].mass = totalMass;
@@ -375,5 +377,6 @@ public class GameGenerator : MonoBehaviour
                 Universe.map[numPlanets] = tmp;
             }
         }
+        EndTurn();
     }
 }
