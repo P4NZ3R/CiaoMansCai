@@ -9,9 +9,13 @@ public class ProjectileGravity : MonoBehaviour
     Collider2D collider;
     const float gravityMultiplier = 10f;
 
-    void Start()
+    void Awake()
     {
         GameGenerator.CurrentProjectiles++;
+    }
+
+    void Start()
+    {
         rigidbody = GetComponent<Rigidbody2D>();
         collider = GetComponent<Collider2D>();
         if (!rigidbody)
@@ -51,15 +55,8 @@ public class ProjectileGravity : MonoBehaviour
             rigidbody = null;
             if (GameGenerator.GrenadeLauncherBullet.gameObject.name + "(Clone)" == gameObject.name)
             {
-                Collider2D[] coll = Physics2D.OverlapCircleAll(transform.position, 4f);
-                for (int i = 0; i < coll.Length; i++)
-                {
-//                    Debug.Log(coll[i].gameObject.name + "," + Vector2.Distance(coll[i].transform.position, transform.position));
-                    if (coll[i].tag == "Player")
-                    {
-                        coll[i].gameObject.GetComponent<Player>().HitPlayer();
-                    }
-                }
+                ShootDebris(collision.relativeVelocity);
+                Destroy(gameObject);
             }
             GameGenerator.CurrentProjectiles--;
             enabled = false;
@@ -70,5 +67,20 @@ public class ProjectileGravity : MonoBehaviour
     {
         if (GameGenerator.followedObject == gameObject)
             GameGenerator.followedObject = null;
+    }
+
+    public void ShootDebris(Vector2 directionImpact)
+    {
+        const float spreadFactor = 50f;
+        const float debrisForce = 500f;
+        const int numProjectile = 8;
+        for (int i = 0; i < numProjectile; i++)
+        {
+            GameObject clone = Instantiate(GameGenerator.ShotgunBullet, transform.position, Quaternion.identity) as GameObject;
+            GameGenerator.followedObject = clone.transform;
+//            Vector2 direction = new Vector2(Rng.GetNumber(-spreadFactor, spreadFactor), Rng.GetNumber(-spreadFactor, spreadFactor));
+            Vector2 direction = Rng.ApplyInaccuracy(directionImpact.normalized, spreadFactor);
+            clone.GetComponent<Rigidbody2D>().AddForce(direction * debrisForce);
+        }
     }
 }

@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
     public int teamId;
     public int playerId;
     public bool isAlive = true;
+    Vector2 playerDirection;
     float anglePos = 0;
     float speedMovement = 3f;
     float basicBulletForce = 1000f;
@@ -77,6 +78,7 @@ public class Player : MonoBehaviour
         float anglePos = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg + 90f;
         Quaternion q = Quaternion.AngleAxis(anglePos, Vector3.forward);
         transform.rotation = q;
+        playerDirection = transform.up;
     }
 
     void RefreshPosition(float angle)
@@ -101,30 +103,30 @@ public class Player : MonoBehaviour
         canShoot = false;
         GameObject clone = Instantiate(GameGenerator.BasicBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
         GameGenerator.followedObject = clone.transform;
-        clone.GetComponent<Rigidbody2D>().AddForce(transform.up * basicBulletForce);
+        clone.GetComponent<Rigidbody2D>().AddForce(playerDirection * basicBulletForce);
     }
 
     public void ShootShotgun()
     {
         canShoot = false;
-        const float spreadFactor = 0.3f;
-        const int numProjectile = 15;
+        const float spreadFactor = 0.4f;
+        const int numProjectile = 5;
         for (int i = 0; i < numProjectile; i++)
         {
             GameObject clone = Instantiate(GameGenerator.ShotgunBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.5f)), Quaternion.identity) as GameObject;
             GameGenerator.followedObject = clone.transform;
-            Vector2 direction = new Vector2(Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.x, Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.y);
-            clone.GetComponent<Rigidbody2D>().AddForce(direction * shotgunBulletForce);
+            Vector2 bulletDirection = Rng.ApplyInaccuracy(playerDirection, spreadFactor);
+            clone.GetComponent<Rigidbody2D>().AddForce(bulletDirection * shotgunBulletForce);
         }
     }
 
     public void ShootGrenadeLauncher()
     {
         canShoot = false;
-        const float spreadFactor = 0.05f;
+        const float spreadFactor = 0.2f;
         GameObject clone = Instantiate(GameGenerator.GrenadeLauncherBullet, transform.TransformPoint(Vector3.up * (transform.localScale.y / 1.2f)), Quaternion.identity) as GameObject;
         GameGenerator.followedObject = clone.transform;
-        Vector2 direction = new Vector2(Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.x, Rng.GetNumber(-spreadFactor, spreadFactor) + transform.up.y);
-        clone.GetComponent<Rigidbody2D>().AddForce(direction * grenadeLauncherBulletForce);
+        Vector2 bulletDirection = Rng.ApplyInaccuracy(playerDirection, spreadFactor);
+        clone.GetComponent<Rigidbody2D>().AddForce(bulletDirection * grenadeLauncherBulletForce);
     }
 }

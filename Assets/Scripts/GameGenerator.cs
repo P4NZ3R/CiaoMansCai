@@ -91,6 +91,7 @@ public class GameGenerator : MonoBehaviour
 
         public GameObject[] players;
         public GameObject[] planets;
+        public bool teamAlive;
     }
 
     public static Team GetTeam(int IDteam)
@@ -159,7 +160,7 @@ public class GameGenerator : MonoBehaviour
         if (followedObject)
         {
             if (Vector2.Distance(mainCamera.transform.position, followedObject.position - Vector3.forward * 10f) > 0.1f)
-                mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, followedObject.position - Vector3.forward * 10f, Time.deltaTime);
+                mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, followedObject.position - Vector3.forward * 10f, Time.deltaTime * 3f);
             else
                 mainCamera.transform.position = followedObject.position - Vector3.forward * 10f;
             //mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[team[activeTeam].turnCounter].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f); 
@@ -187,10 +188,40 @@ public class GameGenerator : MonoBehaviour
         while(team[activeTeam].players[team[activeTeam].ActivePlayer] == null && tmpPlayer != team[activeTeam].ActivePlayer);
         if (tmpPlayer == team[activeTeam].ActivePlayer && team[activeTeam].players[tmpPlayer] == null)
         {
-            Debug.Log("squadra " + activeTeam + " morta");
-            EndTurn();
+            team[activeTeam].teamAlive = false;
+            if (CheckVictory() == -2)//se la partita non è finita e ce qualche squadra attiva
+                EndTurn();
+            else
+                return;
         }
         followedObject = team[activeTeam].players[team[activeTeam].ActivePlayer].transform;
+    }
+
+    /// <summary>
+    /// Checks the victory.
+    /// </summary>
+    /// <returns> -2 means the game is not end, -1 means all deaths, >=0 means id of the winner team</returns>
+    int CheckVictory()
+    {
+        int victoryTeam = -1;
+        for (int i = 0; i < team.Length; i++)
+        {
+            if (team[i].teamAlive)
+            {
+                if (victoryTeam == -1)
+                {
+                    victoryTeam = i;
+                }
+                else
+                {
+                    Debug.Log("ops!");
+                    return -2;
+                }
+            }
+        }
+        if (victoryTeam >= 0)
+            Debug.Log("the winner is team" + victoryTeam + "!!");
+        return victoryTeam;
     }
 
     void GenerateMap()
@@ -246,6 +277,7 @@ public class GameGenerator : MonoBehaviour
                     j = -1;
                 }
             }
+            team[i].teamAlive = true;
             team[i].color = teamColor;
             team[i].players = new GameObject[numPlayer];
             team[i].planets = new GameObject[numPlayer];
