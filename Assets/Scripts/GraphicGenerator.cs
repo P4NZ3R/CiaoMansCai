@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System;
 using System.Text;
-using System.Reflection;
 
 public static class GraphicGenerator
 {
@@ -39,9 +38,7 @@ public static class GraphicGenerator
 			binarySeed = "0" + binarySeed;	// add 0s at the start
 
 		// xnor the first 4 bits with the last 4 bits
-		string xnorSeed = "";
-		for (int i = 0; i < binarySeed.Length / 2; i++)
-			xnorSeed += binarySeed[i] == binarySeed[i + binarySeed.Length / 2] ? "1" : "0";	// xnor
+		string xnorSeed = StringByteXnor(binarySeed.Substring(0, 4), binarySeed.Substring(4, 4));
 
 		// look in the xnor result how many '1' there are
 		int xnorOneN = CountCharsInString(xnorSeed, '1'); // genSelection is the number of '1' in the xnor seed
@@ -49,7 +46,8 @@ public static class GraphicGenerator
 		// planet generation variables
 		int binaryOneN = CountCharsInString(binarySeed, '1'); // binaryOneN is the number of '1' in the binary seed
 
-		int tiles = 1 + binaryOneN;
+		int tiles = 1 + (CountCharsInString(StringByteAnd(binarySeed, binaryScnd), '1') + 1);
+		int segments = CountCharsInString(StringByteOr(binarySeed, binaryScnd), '1') + 1;
 		float dotSize = 8 / (CountCharsInString(StringByteAnd(binarySeed, binaryScnd), '1') + 1);
 		float amplitude = h / (binaryOneN * 2f);
 		float frequency = w / (1 + binaryOneN * 3);
@@ -80,6 +78,13 @@ public static class GraphicGenerator
 						yTile = Mathf.FloorToInt(y / (h / (float)tiles));
 						pixelColor = (xTile + yTile) % 2f == 0 ? team.color : team.color2;
 						break;
+				// RARE JAPAN FLAG PLANET!
+					case 4:
+						Vector2 center = new Vector2(w / 2f, h / 2f);
+						pixelColor = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center) < (w / 4f) ? team.color : 
+							Mathf.FloorToInt((Vector2.Angle(new Vector2(x + 0.5f, y + 0.5f) - center, Vector2.up + center) - (180f / segments / 2f)) / (180f / segments)) % 2f == 0 ? 
+							team.color : team.color2;
+						break;
 				// waves planet
 					default:
 						pixelColor = x < (h / 2f) + Mathf.Sin(y / frequency) * amplitude ? team.color : team.color2;
@@ -101,6 +106,45 @@ public static class GraphicGenerator
 		{
 			if (i < Mathf.Min(b1.Length, b2.Length))
 				b += b1[i] == '1' && b2[i] == '1' ? 1 : 0;
+			else
+				b += 0;
+		}
+		return b;
+	}
+
+	static string StringByteOr(string b1, string b2)
+	{
+		string b = "";
+		for (int i = 0; i < Mathf.Max(b1.Length, b2.Length); i++)
+		{
+			if (i < Mathf.Min(b1.Length, b2.Length))
+				b += b1[i] == '1' || b2[i] == '1' ? 1 : 0;
+			else
+				b += 0;
+		}
+		return b;
+	}
+
+	static string StringByteXor(string b1, string b2)
+	{
+		string b = "";
+		for (int i = 0; i < Mathf.Max(b1.Length, b2.Length); i++)
+		{
+			if (i < Mathf.Min(b1.Length, b2.Length))
+				b += b1[i] != b2[i] ? "1" : "0";
+			else
+				b += 0;
+		}
+		return b;
+	}
+
+	static string StringByteXnor(string b1, string b2)
+	{
+		string b = "";
+		for (int i = 0; i < Mathf.Max(b1.Length, b2.Length); i++)
+		{
+			if (i < Mathf.Min(b1.Length, b2.Length))
+				b += b1[i] == b2[i] ? "1" : "0";
 			else
 				b += 0;
 		}
