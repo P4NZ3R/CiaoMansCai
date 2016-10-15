@@ -26,7 +26,7 @@ public class Player : MonoBehaviour
 //        isActiveSign.gameObject.GetComponent<Animation>().;
 		RefreshPosition(Vector2.Angle(transform.position - planet.transform.position, Vector3.right));
 		planet.GetComponent<SpriteRenderer>().color = Color.white;
-		planet.GetComponent<SpriteRenderer>().sprite = GraphicGenerator.GetPlanetSprite(GameGenerator.GetTeam(teamId));
+		planet.GetComponent<SpriteRenderer>().sprite = GraphicGenerator.GetPlanetSprite(GameGenerator.GetTeam(teamId), planet.transform.lossyScale);
 		shootSomething = ShootBasic;
 	}
 
