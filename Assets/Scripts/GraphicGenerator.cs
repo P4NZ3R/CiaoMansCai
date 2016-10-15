@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System;
+using System.Text;
+using System.Reflection;
 
 public static class GraphicGenerator
 {
@@ -8,7 +10,7 @@ public static class GraphicGenerator
 	public static string GetNewSeed()
 	{
 		int lenght = 2;
-		string chars = "1234567890";
+		string chars = "1234567890AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz";
 		string generatedSeed = "";
 		for (int i = 0; i < lenght; i++)
 			generatedSeed += chars[Rng.GetNumber(0, chars.Length)];
@@ -26,12 +28,13 @@ public static class GraphicGenerator
 		planetSprite.name = "GeneratedSprite";
 
 		//generazione texture
-		string subSeed = GetNewSeed();
 		int h = t.height;
 		int w = t.width;
 
 		// get the seed in binary
-		string binarySeed = Convert.ToString(int.Parse(team.styleSeed), 2); //Convert to binary in a string
+
+		string binarySeed = Convert.ToString(int.Parse(Encoding.UTF8.GetBytes(team.styleSeed)[0] + ""), 2); //Convert to binary in a string
+		string binaryScnd = Convert.ToString(int.Parse(Encoding.UTF8.GetBytes(team.styleSeed)[1] + ""), 2); //Convert to binary in a string
 		for (int i = binarySeed.Length; i < 8; i++)
 			binarySeed = "0" + binarySeed;	// add 0s at the start
 
@@ -47,6 +50,7 @@ public static class GraphicGenerator
 		int binaryOneN = CountCharsInString(binarySeed, '1'); // binaryOneN is the number of '1' in the binary seed
 
 		int tiles = 1 + binaryOneN;
+		float dotSize = 8 / (CountCharsInString(StringByteAnd(binarySeed, binaryScnd), '1') + 1);
 		float amplitude = h / (binaryOneN * 2f);
 		float frequency = w / (1 + binaryOneN * 3);
 
@@ -66,6 +70,10 @@ public static class GraphicGenerator
 							(xTile + yTile) % (float)binarySeed.Length - binaryOneN == 0 ? team.color3 : 
 							(xTile + yTile) % (float)binaryOneN == 0 ? team.color : team.color2;
 						break;
+				// dot planet
+					case 1:
+						pixelColor = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(w / 2f, h / 2f)) > w / (2f + dotSize) ? team.color : team.color2;
+						break;
 				// checker planet
 					case 3:
 						xTile = Mathf.FloorToInt(x / (w / (float)tiles));
@@ -77,13 +85,26 @@ public static class GraphicGenerator
 						pixelColor = x < (h / 2f) + Mathf.Sin(y / frequency) * amplitude ? team.color : team.color2;
 						break;
 				}
-				pixelColor.a = Mathf.Pow(x + 1f - (w + 0.5f) / 2f, 2f) + Mathf.Pow(y + 1f - (h + 0.5f) / 2f, 2f) < Mathf.Pow(w / 2f, 2f) ? 1f : 0f;
+				pixelColor.a = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(w / 2f, h / 2f)) < (w / 2f) ? 1f : 0f;
 				planetSprite.texture.SetPixel(x, y, pixelColor);
 			}
 		}
 
 		planetSprite.texture.Apply();
 		return planetSprite;
+	}
+
+	static string StringByteAnd(string b1, string b2)
+	{
+		string b = "";
+		for (int i = 0; i < Mathf.Max(b1.Length, b2.Length); i++)
+		{
+			if (i < Mathf.Min(b1.Length, b2.Length))
+				b += b1[i] == '1' && b2[i] == '1' ? 1 : 0;
+			else
+				b += 0;
+		}
+		return b;
 	}
 
 	static int CountCharsInString(string s, char c)
