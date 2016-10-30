@@ -44,7 +44,7 @@ public class ButtonManager : MonoBehaviour
         #if UNITY_EDITOR
         canvas.GetComponent<CanvasScaler>().scaleFactor = 1;
         #else
-        canvas.GetComponent<CanvasScaler>().scaleFactor = 4;
+        canvas.GetComponent<CanvasScaler>().scaleFactor = 2.5f;
         #endif
     }
 
