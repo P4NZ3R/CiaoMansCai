@@ -90,6 +90,8 @@ public class Player : MonoBehaviour
         }
         //phone input
         arrow.enabled = false;
+        if (Input.touchCount > 1)
+            inputPosWorldStart = Vector2.zero;
         if (Input.touchCount == 1 && !ButtonManager.Instance.requestMovement1 && !ButtonManager.Instance.requestMovement2)
         {
 //            inputPosActual = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
@@ -100,7 +102,7 @@ public class Player : MonoBehaviour
                 inputPosStart = inputPosActual;
                 inputPosWorldStart = Camera.main.ScreenToWorldPoint(inputPosStart);
             }
-            if (Input.GetTouch(0).phase == TouchPhase.Ended && Vector2.Distance(inputPosStart, inputPosEnd) > 30f)
+            if (Input.GetTouch(0).phase == TouchPhase.Ended && Vector2.Distance(inputPosStart, inputPosEnd) > 30f && inputPosWorldStart != Vector2.zero)
             {
                 inputPosEnd = inputPosActual;
                 inputPosWorldEnd = Camera.main.ScreenToWorldPoint(inputPosEnd);
@@ -116,7 +118,8 @@ public class Player : MonoBehaviour
             Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), tmp, forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
             arrow.transform.position = new Vector2(transform.position.x, transform.position.y) + tmp;
             arrow.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2((inputPosWorldStart - inputPosWorldActual).y, (inputPosWorldStart - inputPosWorldActual).x) * Mathf.Rad2Deg - 90f);
-            arrow.enabled = true;
+            if (GameGenerator.CurrentProjectiles <= 0)
+                arrow.enabled = true;
         }
     }
 

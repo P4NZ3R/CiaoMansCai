@@ -22,6 +22,7 @@ public class GameGenerator : MonoBehaviour
     public int maxMovements = 50;
     public bool drawPlanetRays = true;
     [HideInInspector]public static Transform followedObject;
+    Vector2[] zoomStartPos;
 
     [Header("Players")]
     public int activeTeam = 0;
@@ -63,7 +64,6 @@ public class GameGenerator : MonoBehaviour
         set
         {
             instance.currentProjectiles = value;
-            Debug.Log(value);
             if (instance.currentProjectiles <= 0)
             {
                 if (instance.team[instance.activeTeam].players[instance.team[instance.activeTeam].ActivePlayer])
@@ -112,6 +112,7 @@ public class GameGenerator : MonoBehaviour
         teamNum = Mathf.Clamp(teamNum, 2, 8);
         playerMax = Mathf.Clamp(playerMax, 1, int.MaxValue);
         playerMin = Mathf.Clamp(playerMin, 1, playerMax);
+        zoomStartPos = new Vector2[2];
     }
 
     // Use this for initialization
@@ -169,6 +170,15 @@ public class GameGenerator : MonoBehaviour
                 mainCamera.transform.position = followedObject.position - Vector3.forward * 10f;
             //mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, team[activeTeam].players[team[activeTeam].turnCounter].transform.rotation * Quaternion.Euler(0, 0, 90), Time.deltaTime * 2f); 
         }
+        //input mobile
+        if (Input.touchCount > 1 && Input.touchCount < 3 && Input.GetTouch(0).phase == TouchPhase.Moved && Input.GetTouch(1).phase == TouchPhase.Moved)
+        {
+            mainCamera.orthographicSize += (Vector2.Distance(zoomStartPos[0], zoomStartPos[1]) - Vector2.Distance(Input.GetTouch(0).position, Input.GetTouch(1).position)) * Time.deltaTime * 2;
+        }
+        if (Input.touchCount > 0)
+            zoomStartPos[0] = Input.GetTouch(0).position;
+        if (Input.touchCount > 1)
+            zoomStartPos[1] = Input.GetTouch(1).position;
     }
 
     void OnDestroy()
@@ -226,8 +236,9 @@ public class GameGenerator : MonoBehaviour
         }
         if (victoryTeam >= 0)
         {
-            Debug.Log("the winner is team" + victoryTeam + "!!");
-            ButtonManager.Instance.Invoke("ChangeScene", 5f);
+//            Debug.Log("the winner is team" + victoryTeam + "!!");
+            GameObject.Find("MyText").GetComponent<Text>().text = "the winner is team" + victoryTeam + "!!";
+            Invoke("BackToMenu", 5f);
         }
         return victoryTeam;
     }
@@ -430,5 +441,10 @@ public class GameGenerator : MonoBehaviour
             }
         }
         EndTurn();
+    }
+
+    void BackToMenu()
+    {
+        Application.LoadLevel(0);
     }
 }

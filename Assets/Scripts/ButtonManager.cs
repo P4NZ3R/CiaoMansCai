@@ -41,6 +41,11 @@ public class ButtonManager : MonoBehaviour
         canvas = GameObject.Find("Canvas");
         if (GameObject.Find("switchWeapon"))
             currentWeaponText = GameObject.Find("switchWeapon").transform.GetChild(0).GetComponent<Text>();
+        #if UNITY_EDITOR
+        canvas.GetComponent<CanvasScaler>().scaleFactor = 1;
+        #else
+        canvas.GetComponent<CanvasScaler>().scaleFactor = 4;
+        #endif
     }
 
     //    void Update()
@@ -74,7 +79,7 @@ public class ButtonManager : MonoBehaviour
         CurrentWeapon++;
     }
 
-    public void ChangeScene(string sceneName)
+    public void ChangeScene(string sceneName = "")
     {
         if (string.IsNullOrEmpty(sceneName))
             sceneName = "Menu";
