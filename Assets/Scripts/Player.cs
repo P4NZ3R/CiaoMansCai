@@ -18,6 +18,9 @@ public class Player : MonoBehaviour
     Vector2 inputPosStart;
     Vector2 inputPosEnd;
     Vector2 inputPosActual;
+    Vector2 inputPosWorldStart;
+    Vector2 inputPosWorldEnd;
+    Vector2 inputPosWorldActual;
     [SerializeField]AnimationCurve forceProjectileMobile;
     [HideInInspector]public bool canShoot = true;
 
@@ -84,22 +87,29 @@ public class Player : MonoBehaviour
                 break;
         }
         //phone input
-        if (Input.touchCount == 1)
+        if (Input.touchCount == 1 && !ButtonManager.Instance.requestMovement1 && !ButtonManager.Instance.requestMovement2)
         {
-            inputPosActual = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
+//            inputPosActual = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
+            inputPosActual = Input.GetTouch(0).position;
+            inputPosWorldActual = Camera.main.ScreenToWorldPoint(inputPosActual);
             if (Input.GetTouch(0).phase == TouchPhase.Began)
+            {
                 inputPosStart = inputPosActual;
-            if (Input.GetTouch(0).phase == TouchPhase.Ended)
+                inputPosWorldStart = Camera.main.ScreenToWorldPoint(inputPosStart);
+            }
+            if (Input.GetTouch(0).phase == TouchPhase.Ended && Vector2.Distance(inputPosStart, inputPosEnd) > 30f)
             {
                 inputPosEnd = inputPosActual;
-                shootDirection = inputPosStart - inputPosEnd;
+                Debug.LogError(Vector2.Distance(inputPosStart, inputPosEnd));
+                inputPosWorldEnd = Camera.main.ScreenToWorldPoint(inputPosEnd);
+                shootDirection = inputPosWorldStart - inputPosWorldEnd;
                 shootDirection = shootDirection.normalized * forceProjectileMobile.Evaluate(shootDirection.magnitude / 5f);
                 if (shootDirection.magnitude > 0.2f)
                     shootSomething();
                 
             }
-            Debug.DrawLine(inputPosStart, inputPosActual, Color.grey);
-            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), 6f * (inputPosStart - inputPosActual).normalized * forceProjectileMobile.Evaluate((inputPosStart - inputPosActual).magnitude / 5f), forceProjectileMobile.Evaluate((inputPosStart - inputPosActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
+            Debug.DrawLine(inputPosWorldStart, inputPosWorldActual, Color.grey);
+            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), 6f * (inputPosWorldStart - inputPosWorldActual).normalized * forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f), forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
 //            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), inputPosStart - inputPosActual, forceProjectileMobile.Evaluate((inputPosStart - inputPosActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
         }
     }
