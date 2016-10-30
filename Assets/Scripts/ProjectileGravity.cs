@@ -8,6 +8,7 @@ public class ProjectileGravity : MonoBehaviour
     Rigidbody2D rigidbody;
     Collider2D collider;
     const float gravityMultiplier = 10f;
+    float timePassed;
 
     void Awake()
     {
@@ -42,6 +43,15 @@ public class ProjectileGravity : MonoBehaviour
         rigidbody.AddForce(ris);
     }
 
+    void Update()
+    {
+        timePassed += Time.deltaTime;
+        if (timePassed > 2 && GameGenerator.GrenadeLauncherBullet.gameObject.name + "(Clone)" == gameObject.name)
+            DestroyProjectile();
+        if (timePassed > 10)
+            DestroyProjectile();
+    }
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.transform.tag == "Player")
@@ -63,6 +73,17 @@ public class ProjectileGravity : MonoBehaviour
         }
     }
 
+    void DestroyProjectile()
+    {
+        if (GameGenerator.GrenadeLauncherBullet.gameObject.name + "(Clone)" == gameObject.name)
+        {
+            ShootDebris(rigidbody.velocity);
+            Destroy(gameObject);
+        }
+        GameGenerator.CurrentProjectiles--;
+        Destroy(gameObject);
+    }
+
     void OnDestroy()
     {
         if (GameGenerator.followedObject == gameObject)
@@ -71,7 +92,7 @@ public class ProjectileGravity : MonoBehaviour
 
     public void ShootDebris(Vector2 directionImpact)
     {
-        const float spreadFactor = 50f;
+        const float spreadFactor = 150f;
         const float debrisForce = 500f;
         const int numProjectile = 8;
         for (int i = 0; i < numProjectile; i++)

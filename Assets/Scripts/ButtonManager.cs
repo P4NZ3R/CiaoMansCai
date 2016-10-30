@@ -39,7 +39,8 @@ public class ButtonManager : MonoBehaviour
     {
         instance = this;
         canvas = GameObject.Find("Canvas");
-        currentWeaponText = GameObject.Find("switchWeapon").transform.GetChild(0).GetComponent<Text>();
+        if (GameObject.Find("switchWeapon"))
+            currentWeaponText = GameObject.Find("switchWeapon").transform.GetChild(0).GetComponent<Text>();
     }
 
     //    void Update()
@@ -49,6 +50,14 @@ public class ButtonManager : MonoBehaviour
     //        if (Input.touchCount != 1 && !canvas.activeSelf)
     //            canvas.SetActive(true);
     //    }
+
+    void Update()
+    {
+        if (Input.touchCount > 3 && Input.GetTouch(3).phase == TouchPhase.Stationary)
+            canvas.GetComponent<CanvasScaler>().scaleFactor -= Time.deltaTime;
+        else if (Input.touchCount > 2 && Input.GetTouch(2).phase == TouchPhase.Stationary)
+            canvas.GetComponent<CanvasScaler>().scaleFactor += Time.deltaTime; 
+    }
 
     public void RequestMovement1(bool value)
     {
@@ -63,5 +72,17 @@ public class ButtonManager : MonoBehaviour
     public void SwitchWeapon()
     {
         CurrentWeapon++;
+    }
+
+    public void ChangeScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+            sceneName = "Menu";
+        Application.LoadLevel(sceneName);
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 }

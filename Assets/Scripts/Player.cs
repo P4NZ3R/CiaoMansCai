@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     float basicBulletForce = 1000f;
     float shotgunBulletForce = 800f;
     float grenadeLauncherBulletForce = 1100f;
+    SpriteRenderer arrow;
     Vector2 shootDirection;
     //for mobile
     Vector2 inputPosStart;
@@ -37,6 +38,7 @@ public class Player : MonoBehaviour
         planet.GetComponent<SpriteRenderer>().color = Color.white;
         planet.GetComponent<SpriteRenderer>().sprite = GraphicGenerator.GetPlanetSprite(GameGenerator.GetTeam(teamId), planet.transform.lossyScale);
         shootSomething = ShootBasic;
+        arrow = GameObject.Find("arrow").GetComponent<SpriteRenderer>();
     }
 
     void Update()
@@ -87,6 +89,7 @@ public class Player : MonoBehaviour
                 break;
         }
         //phone input
+        arrow.enabled = false;
         if (Input.touchCount == 1 && !ButtonManager.Instance.requestMovement1 && !ButtonManager.Instance.requestMovement2)
         {
 //            inputPosActual = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
@@ -100,7 +103,6 @@ public class Player : MonoBehaviour
             if (Input.GetTouch(0).phase == TouchPhase.Ended && Vector2.Distance(inputPosStart, inputPosEnd) > 30f)
             {
                 inputPosEnd = inputPosActual;
-                Debug.LogError(Vector2.Distance(inputPosStart, inputPosEnd));
                 inputPosWorldEnd = Camera.main.ScreenToWorldPoint(inputPosEnd);
                 shootDirection = inputPosWorldStart - inputPosWorldEnd;
                 shootDirection = shootDirection.normalized * forceProjectileMobile.Evaluate(shootDirection.magnitude / 5f);
@@ -108,9 +110,13 @@ public class Player : MonoBehaviour
                     shootSomething();
                 
             }
-            Debug.DrawLine(inputPosWorldStart, inputPosWorldActual, Color.grey);
-            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), 6f * (inputPosWorldStart - inputPosWorldActual).normalized * forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f), forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
 //            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), inputPosStart - inputPosActual, forceProjectileMobile.Evaluate((inputPosStart - inputPosActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
+            Debug.DrawLine(inputPosWorldStart, inputPosWorldActual, Color.grey);
+            Vector2 tmp = 6f * (inputPosWorldStart - inputPosWorldActual).normalized * forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f);
+            Debug.DrawRay(new Vector2(transform.position.x, transform.position.y), tmp, forceProjectileMobile.Evaluate((inputPosWorldStart - inputPosWorldActual).magnitude / 5f) > 0.2f ? Color.white : Color.red);
+            arrow.transform.position = new Vector2(transform.position.x, transform.position.y) + tmp;
+            arrow.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2((inputPosWorldStart - inputPosWorldActual).y, (inputPosWorldStart - inputPosWorldActual).x) * Mathf.Rad2Deg - 90f);
+            arrow.enabled = true;
         }
     }
 
